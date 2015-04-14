@@ -89,69 +89,63 @@ function parseLogs() {
 	reader.onload = function(progressEvent) {
 		var lines = this.result.split("\n");
 		lines.pop();
-		try {
-			var logs = lines.map(function(line) {
-				var lineData = line.split(" ");
-				
-				var time = new Date(Date.parse(lineData[0] + "T" + lineData[1] + "Z"));
-				if (time.toString() == "Invalid Date") {
-					return new ElseLog(line)
+		var logs = lines.map(function(line) {
+			var lineData = line.split(" ");
+			
+			var time = new Date(Date.parse(lineData[0] + "T" + lineData[1] + "Z"));
+			if (time.toString() == "Invalid Date") {
+				return new ElseLog(line)
+			}
+			
+			var message = lineData.slice(3).join(" ");
+			
+			var i = message.indexOf("/");
+			if (i == 0) {
+				return new ElseLog(message);
+			}
+			
+			var i = message.indexOf(": ");
+			if (i != -1) {
+				var sender = message.slice(0, i);
+				if (sender.toUpperCase() == sender) {
+					return new ChatLog(time, lineData[2], message, sender);
 				}
-				
-				var message = lineData.slice(3).join(" ");
-				
-				var i = message.indexOf("/");
+			}
+			
+			var i = message.indexOf(" - ");
+			if (i != -1) {
+				var world = message.slice(0, i);
+				if (world.toUpperCase() == world) {
+					return new JoinLeaveLog(time, lineData[2], message, world);
+				}
+			}
+			
+			var worldInfoMessages = [
+				"Creating new world named ",
+				"Loading world named ",
+				"loading world with size:",
+				"not enough food found near by. Trying with new random seed.",
+				"using seed:",
+				"save delay:",
+				"best start pos:",
+				"World load complete.",
+				"Exiting World.",
+				"Renamed "
+			];
+			var isWorldInfo = worldInfoMessages.some(function(m) {
+				var i = message.indexOf(m);
 				if (i == 0) {
-					return new HelpLog(message);
+					return true;
+				} else {
+					return false;
 				}
-				
-				var i = message.indexOf(": ");
-				if (i != -1) {
-					var sender = message.slice(0, i);
-					if (sender.toUpperCase() == sender) {
-						return new ChatLog(time, lineData[2], message, sender);
-					}
-				}
-				
-				var i = message.indexOf(" - ");
-				if (i != -1) {
-					var world = message.slice(0, i);
-					if (world.toUpperCase() == world) {
-						// You could get more information out of the join/leave logs, but I don't think it's useful.
-						return new JoinLeaveLog(time, lineData[2], message, world);
-					}
-				}
-				
-				var worldInfoMessages = [
-					"Creating new world named ",
-					"Loading world named ",
-					"loading world with size:",
-					"not enough food found near by. Trying with new random seed.",
-					"using seed:",
-					"save delay:",
-					"best start pos:",
-					"World load complete.",
-					"Exiting World.",
-					"Renamed "
-				];
-				var isWorldInfo = worldInfoMessages.some(function(m) {
-					var i = message.indexOf(m);
-					if (i == 0) {
-						return true;
-					} else {
-						return false;
-					}
-				});
-				if (isWorldInfo) {
-					return new WorldInfoLog(time, lineData[2], message);
-				}
-				
-				return new Log(time, lineData[2], message);
 			});
-		} catch(error) {
-			alert(error);
-			return;
-		}
+			if (isWorldInfo) {
+				return new WorldInfoLog(time, lineData[2], message);
+			}
+			
+			return new Log(time, lineData[2], message);
+		});
 	
 		var html = "";
 		logs.forEach(function(log) {
