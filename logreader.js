@@ -45,8 +45,9 @@ function WorldInfoLog(time, serverName, message) {
 	return this;
 }
 
-function HelpLog (message) {
+function ElseLog(message) {
 	this.message = message;
+	return this;
 }
 
 function parseLogs() {        
@@ -64,7 +65,7 @@ function parseLogs() {
 	var chatMessageColor = document.getElementById("chatMessageColor").value;
 	var joinLeaveMessageColor = document.getElementById("joinLeaveMessageColor").value;
 	var worldInfoMessageColor = document.getElementById("worldInfoMessageColor").value;
-	var helpMessageColor = document.getElementById("helpMessageColor").value;
+	var consoleColor = document.getElementById("consoleColor").value;
 
 	var admins = document.getElementById("adminnames").value.split('\n');
 	var mods = document.getElementById("modnames").value.split('\n');
@@ -80,7 +81,7 @@ function parseLogs() {
 	var showChatMessages = document.getElementById("showChatMessages").checked;
 	var showJoinLeaveMessages = document.getElementById("showJoinLeaveMessages").checked;
 	var showWorldInfoMessages = document.getElementById("showWorldInfo").checked;
-	var showHelpMessages = document.getElementById("showHelpMessages").checked;
+	var showConsoleCommands = document.getElementById("showConsoleCommands").checked;
 	
 	var file = document.getElementById("file").files[0];
 	var reader = new FileReader();
@@ -93,13 +94,11 @@ function parseLogs() {
 				var lineData = line.split(" ");
 				
 				var time = new Date(Date.parse(lineData[0] + "T" + lineData[1] + "Z"));
-				
-				
-				if (lineData[0].substring(0,1) !== "/") {
-					var message = lineData.slice(3).join(" ");
-				} else {
-					var message = lineData.join(" ");
+				if (time.toString() == "Invalid Date") {
+					return new ElseLog(line)
 				}
+				
+				var message = lineData.slice(3).join(" ");
 				
 				var i = message.indexOf("/");
 				if (i == 0) {
@@ -191,9 +190,9 @@ function parseLogs() {
 				} else {
 					return;
 				}
-			} else if (log instanceof HelpLog) {
-				if (showHelpMessages) {
-					line = '<span style="color: ' + helpMessageColor + '">' + line + "</span>";
+			} else if (log instanceof ElseLog) {
+				if (showConsoleCommands) {
+					line = '<span style="color: ' + consoleColor + '">' + line + "</span>";
 				} else {
 					return;
 				}
