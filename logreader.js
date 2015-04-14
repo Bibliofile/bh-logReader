@@ -1,8 +1,8 @@
-﻿if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
+﻿"use strict";
+
+if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
 	alert('Error: Your browser is unsupported, the application may not function as expected.');
 }
-
-"use strict";
 
 function fileChange() {
 	var file = document.getElementById("file").files[0];
