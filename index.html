@@ -15,45 +15,51 @@
     <label for="showTime">Show times: </label>
     <input type="checkbox" id="showTime" checked/>
     <br/>
-    <label for="showChatMessages">Show chat messages: </label>
-    <input type="checkbox" id="showChatMessages" checked/>
+    <label for="showChatMsgs">Show chat messages: </label>
+    <input type="checkbox" id="showChatMsgs" checked/>
     <br/>
-    <label for="showJoinLeaveMessages">Show join/leave messages: </label>
-    <input type="checkbox" id="showJoinLeaveMessages" checked/>
+    <label for="showJoinLeaveMsgs">Show join/leave messages: </label>
+    <input type="checkbox" id="showJoinLeaveMsgs" checked/>
     <br/>
     <label for="showWorldInfo">Show world info messages: </label>
     <input type="checkbox" id="showWorldInfo" checked/>
     <br/>
-    <label for="showConsoleCommands">Show console commands: </label>
-    <input type="checkbox" id="showConsoleCommands"/>
+    <label for="showCommandMsgs">Show command messages: </label>
+    <input type="checkbox" id="showCommandMsgs" checked/>
     <br/>
-    <label for="chatMessageColor">Chat message color</label>
-    <input type="color" id="chatMessageColor"/>
+	<label for="showServerMsgs">Show server messages: </label>
+    <input type="checkbox" id="showServerMsgs" checked/>
     <br/>
-    <label for="joinLeaveMessageColor">Join/leave message color</label>
-    <input type="color" id="joinLeaveMessageColor"/>
+    <label for="chatMsgColor">Chat message color</label>
+    <input type="color" id="chatMsgColor"/>
     <br/>
-    <label for="worldInfoMessageColor">World info message color</label>
-    <input type="color" id="worldInfoMessageColor"/>
+    <label for="joinLeaveMsgColor">Join/leave message color</label>
+    <input type="color" id="joinLeaveMsgColor"/>
     <br/>
-    <label for="admincolor">Admin color</label>
-    <input type="color" id="admincolor" value="#3013b9"/>
+    <label for="worldInfoMsgColor">World info message color</label>
+    <input type="color" id="worldInfoMsgColor"/>
     <br/>
-    <label for="modcolor">Mod color</label>
-    <input type="color" id="modcolor" value="#25df20"/>
+	<label for="commandMsgColor">Command message color</label>
+    <input type="color" id="commandMsgColor"/>
     <br/>
-	<label for="consoleColor">Console command color</label>
-	<input type="color" id="consoleColor"/>
-	<br/>
-    <label for="adminnames">Admins:</label>
-    <textarea type="text" id="adminnames"></textarea>
+	<label for="serverMsgColor">Server message color</label>
+    <input type="color" id="serverMsgColor"/>
     <br/>
-    <label for="modnames">Mods:</label>
-    <textarea type="text" id="modnames"></textarea>
+    <label for="adminColor">Admin color</label>
+    <input type="color" id="adminColor" value="#3013b9"/>
+    <br/>
+    <label for="modColor">Mod color</label>
+    <input type="color" id="modColor" value="#25df20"/>
+    <br/>
+    <label for="adminNames">Admins:</label>
+    <textarea type="text" id="adminNames"></textarea>
+    <br/>
+    <label for="modNames">Mods:</label>
+    <textarea type="text" id="modNames"></textarea>
     <br/>
     <button id="go" onclick="parseLogs()">Parse Logs</button>
-    <div id="fileinfo"></div>
-    <div id="filedata"></div>
+    <div id="fileInfo"></div>
+    <div id="fileData"></div>
 </body>
 
 </html>

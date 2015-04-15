@@ -6,8 +6,8 @@ if (!(window.File && window.FileReader && window.FileList && window.Blob)) {
 
 function fileChange() {
 	var file = document.getElementById("file").files[0];
-	document.getElementById("fileinfo").innerHTML = "<b>File data:</b><br/>" +
-		"Name: " + file.name + "<br/>" +
+	document.getElementById("fileInfo").innerHTML = "<b>File data:</b><br>" +
+		"Name: " + file.name + "<br>" +
 		"Type: " + file.type;
 }
 
@@ -15,38 +15,54 @@ window.onload = function() {
 	document.getElementById("file").addEventListener("change", fileChange, false);
 }
 
-function Log(time, serverName, message) {
+var worldInfoMsgs = [
+	"Creating new world named ",
+	"Loading world named ",
+	"loading world with size:",
+	"not enough food found near by. Trying with new random seed.",
+	"using seed:",
+	"save delay:",
+	"best start pos:",
+	"World load complete.",
+	"Exiting World.",
+	"Renamed "
+];
+
+function Msg(time, serverName, message) {
 	this.time = time;
 	this.server = serverName;
 	this.message = message;
 	return this;
 }
 
-function ChatLog(time, serverName, message, sender) {
-	this.time = time;
-	this.server = serverName;
-	this.message = message;
+function ChatMsg(msg, sender, strippedMsg) {
+	Msg.call(this, msg.time, msg.serverName, msg.message);
 	this.sender = sender;
+	this.strippedMsg = strippedMsg;
 	return this;
 }
 
-function JoinLeaveLog(time, serverName, message, world) {
-	this.time = time;
-	this.server = serverName;
-	this.message = message;
+function ServerMsg(msg, strippedMsg) {
+	Msg.call(this, msg.time, msg.serverName, msg.message);
+	this.strippedMsg = strippedMsg;
+	return this;
+}
+
+function CommandMsg(msg, sender, command) {
+	Msg.call(this, msg.time, msg.serverName, msg.message);
+	this.sender = sender;
+	this.command = command;
+	return this;
+}
+
+function JoinLeaveMsg(msg, world) {
+	Msg.call(this, msg.time, msg.serverName, msg.message);
 	this.world = world;
 	return this;
 }
 
-function WorldInfoLog(time, serverName, message) {
-	this.time = time;
-	this.server = serverName;
-	this.message = message;
-	return this;
-}
-
-function ElseLog(message) {
-	this.message = message;
+function WorldInfoMsg(msg) {
+	Msg.call(this, msg.time, msg.serverName, msg.message);
 	return this;
 }
 
@@ -60,15 +76,16 @@ function parseLogs() {
 		return;
 	}
 	
-	var adminColor = document.getElementById("admincolor").value;
-	var modColor = document.getElementById("modcolor").value;
-	var chatMessageColor = document.getElementById("chatMessageColor").value;
-	var joinLeaveMessageColor = document.getElementById("joinLeaveMessageColor").value;
-	var worldInfoMessageColor = document.getElementById("worldInfoMessageColor").value;
-	var consoleColor = document.getElementById("consoleColor").value;
+	var adminColor = document.getElementById("adminColor").value;
+	var modColor = document.getElementById("modColor").value;
+	var chatMsgColor = document.getElementById("chatMsgColor").value;
+	var joinLeaveMsgColor = document.getElementById("joinLeaveMsgColor").value;
+	var worldInfoMsgColor = document.getElementById("worldInfoMsgColor").value;
+	var commandMsgColor = document.getElementById("commandMsgColor").value;
+	var serverMsgColor = document.getElementById("serverMsgColor").value;
 
-	var admins = document.getElementById("adminnames").value.split('\n');
-	var mods = document.getElementById("modnames").value.split('\n');
+	var admins = document.getElementById("adminNames").value.split("\n");
+	var mods = document.getElementById("modNames").value.split("\n");
 	admins = admins.map(function(name) {
 		return name.toUpperCase();
 	});
@@ -78,10 +95,11 @@ function parseLogs() {
 	
 	var showTime = document.getElementById("showTime").checked;
 	var showDate = document.getElementById("showDate").checked;
-	var showChatMessages = document.getElementById("showChatMessages").checked;
-	var showJoinLeaveMessages = document.getElementById("showJoinLeaveMessages").checked;
-	var showWorldInfoMessages = document.getElementById("showWorldInfo").checked;
-	var showConsoleCommands = document.getElementById("showConsoleCommands").checked;
+	var showChatMsgs = document.getElementById("showChatMsgs").checked;
+	var showJoinLeaveMsgs = document.getElementById("showJoinLeaveMsgs").checked;
+	var showWorldInfoMsgs = document.getElementById("showWorldInfo").checked;
+	var showCommandMsgs = document.getElementById("showCommandMsgs").checked;
+	var showServerMsgs = document.getElementById("showServerMsgs").checked;
 	
 	var file = document.getElementById("file").files[0];
 	var reader = new FileReader();
@@ -89,111 +107,135 @@ function parseLogs() {
 	reader.onload = function(progressEvent) {
 		var lines = this.result.split("\n");
 		lines.pop();
-		var logs = lines.map(function(line) {
+		
+		// Parse all messages into Msg objects
+		var msgs = [];
+		var currentMsg = null;
+		lines.forEach(function(line) {
 			var lineData = line.split(" ");
+			if (lineData.length < 4) {
+				if (currentMsg) {
+					currentMsg.message += "\n" + line;
+				} else {
+					alert("Invalid log file");
+				}
+				return;
+			}
 			
 			var time = new Date(Date.parse(lineData[0] + "T" + lineData[1] + "Z"));
 			if (time.toString() == "Invalid Date") {
-				return new ElseLog(line)
+				if (currentMsg) {
+					currentMsg.message += "\n" + line;
+				} else {
+					alert("Invalid log file");
+				}
+				return;
 			}
 			
 			var message = lineData.slice(3).join(" ");
-			
-			var i = message.indexOf("/");
-			if (i == 0) {
-				return new ElseLog(message);
+			var msg = new Msg(time, lineData[2], message);
+			if (currentMsg) {
+				msgs.push(currentMsg);
 			}
+			currentMsg = msg;
+		});
+		if (currentMsg) {
+			msgs.push(currentMsg);
+		}
 			
+		
+		// Determine the Msg objects in ChatMsg, CommandMsg, CommandResponseMsg, JoinLeaveMsg, WorldInfoMsg
+		msgs = msgs.map(function(msg) {
+			var message = msg.message;
+			
+			// Chat, command and command response message
 			var i = message.indexOf(": ");
 			if (i != -1) {
 				var sender = message.slice(0, i);
 				if (sender.toUpperCase() == sender) {
-					return new ChatLog(time, lineData[2], message, sender);
+					var strippedMsg = message.slice(i+2);
+					
+					if (strippedMsg.length > 0 && strippedMsg[0] == "/") {
+						return new CommandMsg(msg, sender, strippedMsg.slice(1));
+					}
+					
+					if (sender == "SERVER") {
+						return new ServerMsg(msg, strippedMsg);
+					}
+					
+					return new ChatMsg(msg, sender, strippedMsg);
 				}
 			}
 			
+			// Join/leave message
 			var i = message.indexOf(" - ");
 			if (i != -1) {
 				var world = message.slice(0, i);
 				if (world.toUpperCase() == world) {
-					return new JoinLeaveLog(time, lineData[2], message, world);
+					return new JoinLeaveMsg(msg, world);
 				}
 			}
 			
-			var worldInfoMessages = [
-				"Creating new world named ",
-				"Loading world named ",
-				"loading world with size:",
-				"not enough food found near by. Trying with new random seed.",
-				"using seed:",
-				"save delay:",
-				"best start pos:",
-				"World load complete.",
-				"Exiting World.",
-				"Renamed "
-			];
-			var isWorldInfo = worldInfoMessages.some(function(m) {
-				var i = message.indexOf(m);
-				if (i == 0) {
-					return true;
-				} else {
-					return false;
-				}
-			});
-			if (isWorldInfo) {
-				return new WorldInfoLog(time, lineData[2], message);
+			// World info messages
+			if (worldInfoMsgs.some(function(m) { return message.indexOf(m) == 0; })) {
+				return new WorldInfoMsg(msg);
 			}
 			
-			return new Log(time, lineData[2], message);
+			// Everything else
+			return msgs;
 		});
+		
 	
+		// Display the Msg objects
 		var html = "";
-		logs.forEach(function(log) {
-			var line = log.message;
+		msgs.forEach(function(msg) {
+			var line = msg.message.replace(/\n/g, "<br>");
 			if (showTime) {
-				if (log.time !== "Invalid Date" && log.time !== undefined) {
-					line = log.time.toLocaleTimeString()  + " " + line;
-				}
+				line = msg.time.toLocaleTimeString()  + " " + line;
 			}
 			if (showDate) {
-				if (log.time !== "Invalid Date" && log.time !== undefined) {
-					line = log.time.toLocaleDateString() + " " + line;
-				}
+				line = msg.time.toLocaleDateString() + " " + line;
 			}
-			if (log instanceof ChatLog) {
-				if (showChatMessages) {
-					if (admins.indexOf(log.sender) != -1) {
+			if (msg instanceof ChatMsg) {
+				if (showChatMsgs) {
+					if (admins.indexOf(msg.sender) != -1) {
 						line = '<span style="color: ' + adminColor + '">' + line + "</span>";
-					} else if (mods.indexOf(log.sender) != -1) {
+					} else if (mods.indexOf(msg.sender) != -1) {
 						line = '<span style="color: ' + modColor + '">' + line + "</span>";
 					} else {
-						line = '<span style="color: ' + chatMessageColor + '">' + line + "</span>";
+						line = '<span style="color: ' + chatMsgColor + '">' + line + "</span>";
 					}
 				} else {
 					return;
 				}
-			} else if (log instanceof JoinLeaveLog) {
-				if (showJoinLeaveMessages) {
-					line = '<span style="color: ' + joinLeaveMessageColor + '">' + line + "</span>";
+			} else if (msg instanceof JoinLeaveMsg) {
+				if (showJoinLeaveMsgs) {
+					line = '<span style="color: ' + joinLeaveMsgColor + '">' + line + "</span>";
 				} else {
 					return;
 				}
-			} else if (log instanceof WorldInfoLog) {
-				if (showWorldInfoMessages) {
-					line = '<span style="color: ' + worldInfoMessageColor + '">' + line + "</span>";
+			} else if (msg instanceof WorldInfoMsg) {
+				if (showWorldInfoMsgs) {
+					line = '<span style="color: ' + worldInfoMsgColor + '">' + line + "</span>";
 				} else {
 					return;
 				}
-			} else if (log instanceof ElseLog) {
-				if (showConsoleCommands) {
-					line = '<span style="color: ' + consoleColor + '">' + line + "</span>";
+			} else if (msg instanceof CommandMsg) {
+				if (showCommandMsgs) {
+					line = '<span style="color: ' + commandMsgColor + '">' + line + "</span>";
+				} else {
+					return;
+				}
+			} else if (msg instanceof ServerMsg) {
+				if (showServerMsgs) {
+					line = '<span style="color: ' + serverMsgColor + '">' + line + "</span>";
 				} else {
 					return;
 				}
 			}
-			html += line + "<br/>";
+			html += line + "<br>";
 		});
-		document.getElementById("filedata").innerHTML = html;
+		document.getElementById("fileData").innerHTML = html;
 	};
 	reader.readAsText(file);
 }
