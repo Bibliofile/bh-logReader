@@ -34,9 +34,17 @@ var serverAutoMsgs = [
 	"Privacy setting changed to*",
 	"PVP was already enabled.",
 	// To do
-	// Put a * in the strings to indicate that there can be anything on that place.
 ];
 serverAutoMsgs = serverAutoMsgs.map(function(msg) {
+	return msg.split("*");
+});
+
+var commandMsgs = [
+	"\n/HELP*",
+	"Modlist:\n*"
+	// To do
+];
+commandMsgs = commandMsgs.map(function(msg) {
 	return msg.split("*");
 });
 
@@ -66,10 +74,9 @@ function ServerChatMsg(msg, strippedMsg) {
 	return this;
 }
 
-function CommandMsg(msg, sender, command) {
+function CommandMsg(msg, sender) {
 	Msg.call(this, msg.time, msg.serverName, msg.message);
 	this.sender = sender;
-	this.command = command;
 	return this;
 }
 
@@ -82,6 +89,24 @@ function JoinLeaveMsg(msg, world) {
 function WorldLogMsg(msg) {
 	Msg.call(this, msg.time, msg.serverName, msg.message);
 	return this;
+}
+
+function matchString(parsedStrs, str) {
+	return parsedStrs.some(function(v) {
+		var lastIndex = 0;
+		var maxIndex = v.length - 1;
+		return v.every(function(m, i) {
+			var index = str.indexOf(m, lastIndex);
+			if (index >= lastIndex) {
+				if (i == maxIndex && m != "" && (m.length + index) != str.length) {
+					return false;
+				}
+				lastIndex = index;
+				return true;
+			}
+			return false;
+		});
+	});
 }
 
 function parseLogs() {        
@@ -175,26 +200,14 @@ function parseLogs() {
 				var strippedMsg = message.slice(i+2);
 				
 				if (strippedMsg.length > 0 && strippedMsg[0] == "/") {
-					return new CommandMsg(msg, sender, strippedMsg.slice(1));
+					return new CommandMsg(msg, sender);
 				}
 				
 				if (sender == "SERVER") {
-					var found = serverAutoMsgs.some(function(v) {
-						var lastIndex = 0;
-						var maxIndex = v.length - 1;
-						return v.every(function(m, i) {
-							var index = strippedMsg.indexOf(m, lastIndex);
-							if (index >= lastIndex) {
-								if (i == maxIndex && m != "" && (m.length + index) != strippedMsg.length) {
-									return false;
-								}
-								lastIndex = index;
-								return true;
-							}
-							return false;
-						});
-					});
-					if (found) {
+					if (matchString(commandMsgs, strippedMsg)) {
+						return new CommandMsg(msg, sender);
+					}
+					if (matchString(serverAutoMsgs, strippedMsg)) {
 						return new ServerAutoMsg(msg, strippedMsg);
 					}
 					
