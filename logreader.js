@@ -31,8 +31,10 @@ var worldLogMsgs = [
 ];
 
 var serverAutoMsgs = [
-	"Privacy setting changed to*",
-	"PVP was already enabled.",
+	"PVP is now *",
+	"Privacy setting changed to *",
+	"PVP was already *",
+	"Reloaded lists.",
 	// To do
 ];
 serverAutoMsgs = serverAutoMsgs.map(function(msg) {
@@ -41,7 +43,12 @@ serverAutoMsgs = serverAutoMsgs.map(function(msg) {
 
 var commandMsgs = [
 	"\n/HELP*",
-	"Modlist:\n*"
+	"* has been added to the *",
+	"Adminlist:\n*",
+	"Modlist:\n*",
+	"*was not on the *",
+	"*has been removed from the *",
+	"Whitelist cleared."
 	// To do
 ];
 commandMsgs = commandMsgs.map(function(msg) {
