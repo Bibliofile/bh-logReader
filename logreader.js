@@ -25,7 +25,8 @@ var worldInfoMsgs = [
 	"best start pos:",
 	"World load complete.",
 	"Exiting World.",
-	"Renamed "
+	"Renamed ",
+	"Client disconnected:"
 ];
 
 function Msg(time, serverName, message) {
