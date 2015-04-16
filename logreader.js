@@ -183,7 +183,7 @@ function parseLogs() {
 			}
 			
 			// Everything else
-			return msgs;
+			return msg;
 		});
 		
 	
