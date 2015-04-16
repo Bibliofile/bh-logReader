@@ -152,19 +152,17 @@ function parseLogs() {
 			var i = message.indexOf(": ");
 			if (i != -1) {
 				var sender = message.slice(0, i).toUpperCase();
-				if (sender.toUpperCase() == sender) {
-					var strippedMsg = message.slice(i+2);
-					
-					if (strippedMsg.length > 0 && strippedMsg[0] == "/") {
-						return new CommandMsg(msg, sender, strippedMsg.slice(1));
-					}
-					
-					if (sender == "SERVER") {
-						return new ServerMsg(msg, strippedMsg);
-					}
-					
-					return new ChatMsg(msg, sender, strippedMsg);
+				var strippedMsg = message.slice(i+2);
+				
+				if (strippedMsg.length > 0 && strippedMsg[0] == "/") {
+					return new CommandMsg(msg, sender, strippedMsg.slice(1));
 				}
+				
+				if (sender == "SERVER") {
+					return new ServerMsg(msg, strippedMsg);
+				}
+				
+				return new ChatMsg(msg, sender, strippedMsg);
 			}
 			
 			// Join/leave message
