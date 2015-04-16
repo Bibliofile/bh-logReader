@@ -151,7 +151,7 @@ function parseLogs() {
 			// Chat, command and command response message
 			var i = message.indexOf(": ");
 			if (i != -1) {
-				var sender = message.slice(0, i);
+				var sender = message.slice(0, i).toUpperCase();
 				if (sender.toUpperCase() == sender) {
 					var strippedMsg = message.slice(i+2);
 					
