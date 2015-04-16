@@ -15,7 +15,7 @@ window.onload = function() {
 	document.getElementById("file").addEventListener("change", fileChange, false);
 }
 
-var worldInfoMsgs = [
+var worldLogMsgs = [
 	"Creating new world named ",
 	"Loading world named ",
 	"loading world with size:",
@@ -25,8 +25,20 @@ var worldInfoMsgs = [
 	"best start pos:",
 	"World load complete.",
 	"Exiting World.",
-	"Renamed "
+	"Renamed ",
+	"attempt to reconnect from same device",
+	"trying to load plant already loaded"
 ];
+
+var serverAutoMsgs = [
+	"Privacy setting changed to*",
+	"PVP was already enabled.",
+	// To do
+	// Put a * in the strings to indicate that there can be anything on that place.
+];
+serverAutoMsgs = serverAutoMsgs.map(function(msg) {
+	return msg.split("*");
+});
 
 function Msg(time, serverName, message) {
 	this.time = time;
@@ -42,7 +54,13 @@ function ChatMsg(msg, sender, strippedMsg) {
 	return this;
 }
 
-function ServerMsg(msg, strippedMsg) {
+function ServerAutoMsg(msg, strippedMsg) {
+	Msg.call(this, msg.time, msg.serverName, msg.message);
+	this.strippedMsg = strippedMsg;
+	return this;
+}
+
+function ServerChatMsg(msg, strippedMsg) {
 	Msg.call(this, msg.time, msg.serverName, msg.message);
 	this.strippedMsg = strippedMsg;
 	return this;
@@ -61,7 +79,7 @@ function JoinLeaveMsg(msg, world) {
 	return this;
 }
 
-function WorldInfoMsg(msg) {
+function WorldLogMsg(msg) {
 	Msg.call(this, msg.time, msg.serverName, msg.message);
 	return this;
 }
@@ -80,9 +98,10 @@ function parseLogs() {
 	var modColor = document.getElementById("modColor").value;
 	var chatMsgColor = document.getElementById("chatMsgColor").value;
 	var joinLeaveMsgColor = document.getElementById("joinLeaveMsgColor").value;
-	var worldInfoMsgColor = document.getElementById("worldInfoMsgColor").value;
+	var worldLogMsgColor = document.getElementById("worldLogMsgColor").value;
 	var commandMsgColor = document.getElementById("commandMsgColor").value;
-	var serverMsgColor = document.getElementById("serverMsgColor").value;
+	var serverChatMsgColor = document.getElementById("serverChatMsgColor").value;
+	var serverAutoMsgColor = document.getElementById("serverAutoMsgColor").value;
 
 	var admins = document.getElementById("adminNames").value.split("\n");
 	var mods = document.getElementById("modNames").value.split("\n");
@@ -97,9 +116,10 @@ function parseLogs() {
 	var showDate = document.getElementById("showDate").checked;
 	var showChatMsgs = document.getElementById("showChatMsgs").checked;
 	var showJoinLeaveMsgs = document.getElementById("showJoinLeaveMsgs").checked;
-	var showWorldInfoMsgs = document.getElementById("showWorldInfo").checked;
+	var showWorldLogMsgs = document.getElementById("showWorldLogMsgs").checked;
 	var showCommandMsgs = document.getElementById("showCommandMsgs").checked;
-	var showServerMsgs = document.getElementById("showServerMsgs").checked;
+	var showServerChatMsgs = document.getElementById("showServerChatMsgs").checked;
+	var showServerAutoMsgs = document.getElementById("showServerAutoMsgs").checked;
 	
 	var file = document.getElementById("file").files[0];
 	var reader = new FileReader();
@@ -159,7 +179,26 @@ function parseLogs() {
 				}
 				
 				if (sender == "SERVER") {
-					return new ServerMsg(msg, strippedMsg);
+					var found = serverAutoMsgs.some(function(v) {
+						var lastIndex = 0;
+						var maxIndex = v.length - 1;
+						return v.every(function(m, i) {
+							var index = strippedMsg.indexOf(m, lastIndex);
+							if (index >= lastIndex) {
+								if (i == maxIndex && m != "" && (m.length + index) != strippedMsg.length) {
+									return false;
+								}
+								lastIndex = index;
+								return true;
+							}
+							return false;
+						});
+					});
+					if (found) {
+						return new ServerAutoMsg(msg, strippedMsg);
+					}
+					
+					return new ServerChatMsg(msg, strippedMsg);
 				}
 				
 				return new ChatMsg(msg, sender, strippedMsg);
@@ -175,8 +214,8 @@ function parseLogs() {
 			}
 			
 			// World info messages
-			if (worldInfoMsgs.some(function(m) { return message.indexOf(m) == 0; })) {
-				return new WorldInfoMsg(msg);
+			if (worldLogMsgs.some(function(m) { return message.indexOf(m) == 0; })) {
+				return new WorldLogMsg(msg);
 			}
 			
 			// Everything else
@@ -212,9 +251,9 @@ function parseLogs() {
 				} else {
 					return;
 				}
-			} else if (msg instanceof WorldInfoMsg) {
-				if (showWorldInfoMsgs) {
-					line = '<span style="color: ' + worldInfoMsgColor + '">' + line + "</span>";
+			} else if (msg instanceof WorldLogMsg) {
+				if (showWorldLogMsgs) {
+					line = '<span style="color: ' + worldLogMsgColor + '">' + line + "</span>";
 				} else {
 					return;
 				}
@@ -224,9 +263,15 @@ function parseLogs() {
 				} else {
 					return;
 				}
-			} else if (msg instanceof ServerMsg) {
-				if (showServerMsgs) {
-					line = '<span style="color: ' + serverMsgColor + '">' + line + "</span>";
+			} else if (msg instanceof ServerChatMsg) {
+				if (showServerChatMsgs) {
+					line = '<span style="color: ' + serverChatMsgColor + '">' + line + "</span>";
+				} else {
+					return;
+				}
+			} else if (msg instanceof ServerAutoMsg) {
+				if (showServerAutoMsgs) {
+					line = '<span style="color: ' + serverAutoMsgColor + '">' + line + "</span>";
 				} else {
 					return;
 				}
