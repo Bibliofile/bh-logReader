@@ -48,7 +48,8 @@ var commandMsgs = [
 	"Modlist:\n*",
 	"*was not on the *",
 	"*has been removed from the *",
-	"Whitelist cleared."
+	"Whitelist cleared.",
+	"There are * players connected:\n"
 	// To do
 ];
 commandMsgs = commandMsgs.map(function(msg) {
